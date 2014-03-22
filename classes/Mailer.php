@@ -6,7 +6,7 @@
  * and open the template in the editor.
  */
 
-namespace Mailer;
+//namespace Mailer;
 
 /**
  * Description of Mailer
@@ -16,7 +16,9 @@ namespace Mailer;
 class Mailer {
     //put your code here
     
-    public static function sendMail($message, $to, $from, $headers) {
-        
+    public function sendMail($mailTo, $mailSubject, $mailBody, $mailFrom) {
+       
+        mail($mailTo, $mailSubject, $mailBody, $mailFrom);
+
     }
 }

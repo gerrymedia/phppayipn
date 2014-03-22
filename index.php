@@ -2,11 +2,12 @@
 
 define('DOCROOT', dirname(__FILE__));
 
+include_once DOCROOT.'/includes/config.inc';
+
 function __autoload($class_name) {
     $filename = DOCROOT.'/classes/'.$class_name . '.php';
     require_once $filename;
-       
-    print $filename;
+ 
 }
 
 use \Listener as Listener;
@@ -28,6 +29,7 @@ and open the template in the editor.
         <?php
         
         $listener = new Listener();
+        $listener->returnFirstResponse($_POST);
         
         ?>
     </body>
