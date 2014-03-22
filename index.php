@@ -1,3 +1,18 @@
+<?php
+
+define('DOCROOT', dirname(__FILE__));
+
+function __autoload($class_name) {
+    $filename = DOCROOT.'/classes/'.$class_name . '.php';
+    require_once $filename;
+       
+    print $filename;
+}
+
+use \Listener as Listener;
+
+?>
+
 <!DOCTYPE html>
 <!--
 To change this license header, choose License Headers in Project Properties.
@@ -11,7 +26,9 @@ and open the template in the editor.
     </head>
     <body>
         <?php
-        // put your code here
+        
+        $listener = new Listener();
+        
         ?>
     </body>
 </html>
