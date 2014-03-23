@@ -21,27 +21,17 @@ class Listener {
         //print "Hello";
     }
     
-    public function returnFirstResponse($postData){
+    public function returnFirstResponse(){
         
         // @ipnMessage: PayPal HTTP POSTs your listener an IPN message that notifies you an event (payment via button or API)
         
         // this function returns an empty HTTP 200 response.
         
-        header('HTTP/1.1 200 OK'); 
+        return header('HTTP/1.1 200 OK'); 
                 
-        $data = array();
-        
-        foreach($postData as $key => $value){
-            $value = urlencode(stripslashes($value));
-            $data[$key] = $value;
-        }
-        
-        $this->returnHttpPostPaypal($data);               
-        
-        
-    }
+      }
     
-    private function returnHttpPostPaypal($data){
+    public function returnHttpPostPaypal($data){
         
         /* Your listener HTTP POSTs the complete, unaltered message back to PayPal.
         * Note: This message must contain the same fields, in the same order, as the 
@@ -49,28 +39,41 @@ class Listener {
         * Further, this message must use the same encoding as the original.
         */
         
-        $postBackBaseURL = "https://www.paypal.com/cgi-bin/webscr?cmd=_notify-validate&";
+        // read the post from PayPal system and add 'cmd'
+       
+        $req = 'cmd=_notify-validate';
+        if(function_exists('get_magic_quotes_gpc')) {
+                $get_magic_quotes_exists = true;
+        }
+        foreach ($data as $key => $value) {
+                if($get_magic_quotes_exists == true && get_magic_quotes_gpc() == 1) {
+                        $value = urlencode(stripslashes($value));
+                } else {
+                        $value = urlencode($value);
+                }
+                $req .= "&$key=$value";
+        }
+
+        // Post IPN data back to PayPal to validate the IPN data is genuine
+        // Without this step anyone can fake IPN data
         
-        $postBackURI = $postBackBaseURL;
-        
-        $req = http_build_query($data);
-        
-        $options = array(
-            'http' => array(
-            'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
-            'method'  => 'POST',
-            'content' => $req,
-            ),
-        );
-        
-        $context  = stream_context_create($options);
-        
-         // Open a socket for the acknowledgement request
-        $fp = fsockopen(ENV, 443, $errno, $errstr, 30);
-  
-        // make the http post
-        $postRequest = file_get_contents($postBackBaseURL, false, $context);
-        
+        if(USE_SANDBOX == true) {
+	$postBackBaseURL = "ssl://www.sandbox.paypal.com";
+        } else {
+	$postBackBaseURL = "ssl://www.paypal.com";
+        }
+
+       // Set up the acknowledgement request headers
+        $header  = "POST /cgi-bin/webscr HTTP/1.1\r\n";                    // HTTP POST request
+        $header .= "Content-Type: application/x-www-form-urlencoded\r\n";
+        $header .= "Content-Length: " . strlen($req) . "\r\n\r\n";
+
+        // Open a socket for the acknowledgement request
+        $fp = fsockopen($postBackBaseURL, 443, $errno, $errstr, 30);
+
+        // Send the HTTP POST request back to PayPal for validation
+        fputs($fp, $header . $req);
+                
         // process the response
         $this->processResponseToHttpPost($fp, $req);
         
@@ -90,8 +93,8 @@ class Listener {
             
             $res = fgets($fp, 1024);
             
-            switch ($paypalResponse) {
-                case strcmp ($res, "VERIFIED") == 0:
+            if (strcmp ($res, "VERIFIED") == 0) {
+                
                     
                       // Send an email announcing the IPN message is VERIFIED
                         $mail_From    = COMPANY_EMAIL;
@@ -124,10 +127,9 @@ class Listener {
 
                      //do something here
 
-                    break;
+            } else {
 
-                default:
-                    
+              
                      // Send an email announcing the IPN message is INVALID
                         $mail_From    = COMPANY_EMAIL;
                         $mail_To      = MY_EMAIL;
@@ -137,9 +139,11 @@ class Listener {
                         $mailer = new Mailer();
                         $mailer->sendMail($mail_To, $mail_Subject, $mail_Body, $mail_From);
                         
-                    break;
+                  
             }
         }
         
+         fclose($fp);  // Close the file
+         
     }
 }

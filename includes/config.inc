@@ -6,3 +6,4 @@ define("COMPANY_EMAIL","ipn@cnjwebdesign.com");
 define("MY_EMAIL","gerrymedia@gmail.com");
 define("VERIFIED_IPN_EMAIL_SUBJECT", "VERIFIED IPN");
 define("INVALID_IPN_EMAIL_SUBJECT", "INVALID IPN");
+define("USE_SANDBOX", true);

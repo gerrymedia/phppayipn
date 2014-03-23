@@ -11,6 +11,7 @@ function __autoload($class_name) {
 }
 
 use \Listener as Listener;
+use \Mailer as Mailer;
 
 ?>
 
@@ -29,8 +30,23 @@ and open the template in the editor.
         <?php
         
         $listener = new Listener();
-        $listener->returnFirstResponse($_POST);
+        $listener->returnFirstResponse();
         
+        
+        $rawPostData = file_get_contents('php://input');
+        $rawPostDataArray = explode('&', $rawPostData);
+
+        $postData = array();
+        
+        foreach ($rawPostDataArray as $keyval) {
+	$keyval = explode ('=', $keyval);
+	if (count($keyval) == 2) {
+		$postData[$keyval[0]] = urldecode($keyval[1]);
+            }
+        }
+        
+        $listener->returnHttpPostPaypal($postData);  
+       
         ?>
     </body>
 </html>
